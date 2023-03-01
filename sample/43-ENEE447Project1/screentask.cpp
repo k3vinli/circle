@@ -33,11 +33,12 @@ CScreenTask::~CScreenTask (void)
 
 void CScreenTask::Run (void)
 {
-	while (1)
-	{
+	// while (1)
+	// {
 		CString Message;
+		CString prio;
 		Message.Format ("#%u   ", m_nTaskID);
-
+		prio.Format ("Priority: %u\n", this->GetTaskPriority());
 		for (unsigned i = 0; i < m_nTaskID; i++)
 		{
 			Message.Append ("    ");
@@ -45,7 +46,7 @@ void CScreenTask::Run (void)
 		Message.Append ("****\n");
 
 		m_pScreen->Write (Message, Message.GetLength ());
-
+		m_pScreen->Write (prio, prio.GetLength ());
 		CScheduler::Get ()->MsSleep (m_nTaskID * 1000);
-	}
+	// }
 }

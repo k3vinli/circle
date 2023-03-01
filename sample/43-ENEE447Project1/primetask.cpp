@@ -79,7 +79,9 @@ void CPrimeTask::Run (void)
 			break;
 		}
 	}
-
+	CString prio;
+	prio.Format ("Priority: %u\n", this->GetTaskPriority());
+	m_pScreen->Write (prio, prio.GetLength ());
 	// task will terminate automatically
 }
 

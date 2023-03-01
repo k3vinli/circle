@@ -374,60 +374,65 @@ unsigned CScheduler::GetNextTask (void)
 	unsigned nTask = m_nCurrent < MAX_TASKS ? m_nCurrent : 0;
 
 	unsigned nTicks = CTimer::Get ()->GetClockTicks ();
-
-	for (unsigned i = 1; i <= m_nTasks; i++)
-	{
-		if (++nTask >= m_nTasks)
-		{
+	unsigned nHighestPrio = MAX_TASKS;
+	unsigned highestPrio = 0;
+	for (unsigned i = 1; i <= m_nTasks; i++) {
+		if (++nTask >= m_nTasks) {
 			nTask = 0;
 		}
 
 		CTask *pTask = m_pTask[nTask];
-		if (pTask == 0)
-		{
+		if (pTask == 0) {
 			continue;
 		}
 
-		if (pTask->IsSuspended ())
-		{
+		if (pTask->IsSuspended ()) {
 			continue;
 		}
 
-		switch (pTask->GetState ())
-		{
+		switch (pTask->GetState ()) {
 		case TaskStateReady:
-			return nTask;
+			if (pTask->GetTaskPriority() > highestPrio) {
+				highestPrio = pTask->GetTaskPriority();
+				nHighestPrio = nTask;
+			}
+			continue;
 
 		case TaskStateBlocked:
 		case TaskStateNew:
 			continue;
 
 		case TaskStateBlockedWithTimeout:
-			if ((int) (pTask->GetWakeTicks () - nTicks) > 0)
-			{
+			if ((int) (pTask->GetWakeTicks () - nTicks) > 0) {
 				continue;
 			}
 			pTask->SetState (TaskStateReady);
 			pTask->SetWakeTicks(0);		// Use as flag that timeout expired
-			return nTask;
+			if (pTask->GetTaskPriority() > highestPrio) {
+				highestPrio = pTask->GetTaskPriority();
+				nHighestPrio = nTask;
+			}
+			continue;
 
 
 		case TaskStateSleeping:
-			if ((int) (pTask->GetWakeTicks () - nTicks) > 0)
-			{
+			if ((int) (pTask->GetWakeTicks () - nTicks) > 0) {
 				continue;
 			}
 			pTask->SetState (TaskStateReady);
-			return nTask;
+			if (pTask->GetTaskPriority() > highestPrio) {
+				highestPrio = pTask->GetTaskPriority();
+				nHighestPrio = nTask;
+			}
+			continue;
 
 		case TaskStateTerminated:
-			if (m_pTaskTerminationHandler != 0)
-			{
+			if (m_pTaskTerminationHandler != 0) {
 				(*m_pTaskTerminationHandler) (pTask);
 			}
 			RemoveTask (pTask);
 			delete pTask;
-			return MAX_TASKS;
+			continue;
 
 		default:
 			assert (0);
@@ -435,11 +440,10 @@ unsigned CScheduler::GetNextTask (void)
 		}
 	}
 
-	return MAX_TASKS;
+	return nHighestPrio;
 }
 
-CScheduler *CScheduler::Get (void)
-{
+CScheduler *CScheduler::Get (void) {
 	assert (s_pThis != 0);
 	return s_pThis;
 }

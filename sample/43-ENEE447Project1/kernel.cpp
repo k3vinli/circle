@@ -81,17 +81,21 @@ TShutdownMode CKernel::Run (void)
 	m_Logger.Write (FromKernel, LogNotice, "Compile time: " __DATE__ " " __TIME__);
 
 	// start tasks
-	for (unsigned nTaskID = 1; nTaskID <= 4; nTaskID++)
-	{
-		auto t = new CScreenTask (nTaskID, &m_Screen);
-		t->SetTaskPriority(30);
-	}
+	// for (unsigned nTaskID = 1; nTaskID <= 4; nTaskID++) {
+	// 	auto t = new CScreenTask (nTaskID, &m_Screen);
+	// 	t->SetTaskPriority(30);
+	// }
 
+	// start tasks
+	for (unsigned nTaskID = 1; nTaskID <= 10; nTaskID++) {
+		auto t = new CScreenTask (nTaskID, &m_Screen);
+		t->SetTaskPriority((11 - nTaskID) * 10);
+	}
 	auto t = new CPrimeTask (&m_Screen);
-	t->SetTaskPriority(20);
+	t->SetTaskPriority(3);
 
 	auto t2 = new CLEDTask (&m_ActLED);
-	t2->SetTaskPriority(10);
+	t2->SetTaskPriority(5);
 
 	// the main task
 	while (1)
