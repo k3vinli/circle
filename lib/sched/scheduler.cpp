@@ -509,13 +509,13 @@ void ContextSwitchOnIrqReturn_by_modifyingTaskContextSavedByIrqStub(TTaskRegiste
 	TTaskRegisters *pOldRegs = scheduler->m_pCurrent->GetRegs();
 	scheduler->m_pCurrent = pNextYield;
 	TTaskRegisters *pNewRegs = scheduler->m_pCurrent->GetRegs();
-
+	*pOldRegs = *regs_saved_by_irq_stub;
+	*regs_saved_by_irq_stub = *pNewRegs;
 	if (scheduler->m_pTaskSwitchHandler != 0) {
 		(*scheduler->m_pTaskSwitchHandler) (scheduler->m_pCurrent);
 	}
 	// move registers for next task
-	*pOldRegs = *regs_saved_by_irq_stub;
-	*regs_saved_by_irq_stub = *pNewRegs;
+
 	assert (pOldRegs != 0);
 	assert (pNewRegs != 0);
 
