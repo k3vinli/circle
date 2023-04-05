@@ -25,7 +25,13 @@
 	.globl	TaskSwitch
 TaskSwitch:
 	// TODO: delete the instruction below: 
-	bx	lr
+	
+	
+	mrs r14, cpsr
+	msr spsr, r14
+	cpsid i, #18
+	mov r14, pc
+	b __contextswitch_impl
 
 	// TODO: Implement `TaskSwitch`
 	// Hint: 
