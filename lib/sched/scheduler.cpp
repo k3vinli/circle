@@ -212,7 +212,7 @@ void CScheduler::ListTasks (CDevice *pTarget)
 }
 
 void CScheduler::AddTask (CTask *pTask)
-{
+{	DisableIRQs();
 	assert (pTask != 0);
 
 	if (m_iSuspendNewTasks)
@@ -235,6 +235,7 @@ void CScheduler::AddTask (CTask *pTask)
 	}
 
 	m_pTask[m_nTasks++] = pTask;
+	EnableIRQs();
 }
 
 boolean CScheduler::BlockTask (CTask **ppWaitListHead, unsigned nMicroSeconds)
@@ -551,6 +552,6 @@ void ContextSwitchOnIrqReturn_by_modifyingTaskContextSavedByIrqStub(TTaskRegiste
 	assert (pOldRegs != 0);
 	assert (pNewRegs != 0);
 
-	CLogger::Get()->Write(FromScheduler, LogDebug, "Current task is task %s, will switch to task %s.\n", currTaskName, pNextYield->GetName());
+	//CLogger::Get()->Write(FromScheduler, LogDebug, "Current task is task %s, will switch to task %s.\n", currTaskName, pNextYield->GetName());
 
 }

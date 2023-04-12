@@ -27,10 +27,13 @@ TaskSwitch:
 	// TODO: delete the instruction below: 
 	
 	
-	mrs r14, cpsr
-	msr spsr, r14
+	mrs r0, cpsr
+	mov r1, lr
 	cpsid i, #18
-	mov r14, pc
+	mov lr, r1
+	msr spsr, r0
+
+
 	b __contextswitch_impl
 
 	// TODO: Implement `TaskSwitch`

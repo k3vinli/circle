@@ -124,16 +124,6 @@ __contextswitch_impl:
 	// TODO: Copy your working project 2 solution to here
 	// (TAs will publish project 2 solution later after 
 	// all lab sections have concluded project 2)
-	#ifdef SAVE_VFP_REGS_ON_IRQ
-#if RASPPI >= 2 && defined (__FAST_MATH__)
-	vldmia	sp!, {d16-d31}
-#endif
-	vldmia	sp!, {d0-d15}			/* restore VFP registers */
-	ldmfd	sp!, {r0}
-	vmsr	fpscr, r0
-	add	sp, sp, #4			/* correct stack */
-#endif
-	ldmfd	sp!, {r0-r3, r12, lr}		/* restore registers but __DO NOT__ return */
 	// The above 6 instructions are identical to the 6 instructions 
 	//   before them except that the last instruction replaced "pc" with "lr"
 	//   and removed the ending caret "^". 
