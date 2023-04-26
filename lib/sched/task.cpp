@@ -206,6 +206,7 @@ CUserModeTask::CUserModeTask(const char *exe_path)
 {
 	// Create a page table for this user mode task. 
 	// The new page table is initialized as a copy of the page table used by kernel tasks.
+	u32 *pTable = (u32*)((int)m_mem_to_contain_pTable & ~(0x4000-1)) + 0x4000;
 	m_pPageTable = new CPageTable (
 		(u32*)((int)m_mem_to_contain_pTable & ~(0x4000-1)) + 0x4000, // A hack that makes sure the page table is aligned to 16KB boundaries.
 		CMemorySystem::Get()->GetKernelPageTable()
@@ -216,7 +217,6 @@ CUserModeTask::CUserModeTask(const char *exe_path)
 	const u32 *m_user_stack_init_addr = (u32*)0x9FFFFFF0;
 
 	kernel_sp = m_Regs.sp;
-
 	// NOTE: In this project, the ARM virtual memory system uses pages of 1MB.
 	// 	 The page table entry uses the "Section" format of [1]'s
 	//	 "Table B4-2 First-level descriptor format (VMSAv6, subpages disabled)"
@@ -228,12 +228,16 @@ CUserModeTask::CUserModeTask(const char *exe_path)
 	//   - For pc, assign `m_exe_load_addr` to it.
 	//   - For sp, assign `m_user_stack_init_addr` to it.
 	//   - For cpsr, you need to make sure it's user mode and IRQ interrupt is enabled.
-	
-	writeTTBR0(*pTable);
-	asm volatile ("mov pc, #0x80000000");
-	asm volatile ("mov sp, #0x80000004");
-	EnableIRQs();
-	asm volatile ("CPS #16");
+
+	// CLogger::Get ()->Write ("ttbr0", LogDebug, "%x", readTTBR0());
+	// writeTTBR0((m_pPageTable->GetBaseAddress()<<14));
+	// u32 temp = readTTBR0() & 0x3FFFF;
+	// CLogger::Get ()->Write ("ttbr0", LogDebug, "%x", temp);
+
+	m_Regs.ttbr0 = (u32)m_pPageTable->GetBaseAddress();
+	m_Regs.pc = (u32)m_exe_load_addr;
+	m_Regs.sp = (u32)m_user_stack_init_addr;
+	m_Regs.cpsr = 16;
 
 	void *physical_page_1_baseaddr = CMemorySystem::Get()->UserModeTaskPageAllocate();	
 	void *physical_page_2_baseaddr = CMemorySystem::Get()->UserModeTaskPageAllocate();	
@@ -254,9 +258,10 @@ CUserModeTask::CUserModeTask(const char *exe_path)
 
 	u32 *pageTable = m_pPageTable->GetPageTable();
 
-	int page_no_1 = 0xFFF; // TODO: figure out what this variable should be.
-	int page_no_2 = 0xFFF; // TODO: figure out what this variable should be.
-
+	int page_no_1 = (u32)m_exe_load_addr >> 20; // TODO: figure out what this variable should be.
+	int page_no_2 = (u32)m_user_stack_init_addr >> 20; // TODO: figure out what this variable should be.
+	CLogger::Get ()->Write ("task", LogDebug, "%x", page_no_1);
+	CLogger::Get ()->Write ("task", LogDebug, "%x", page_no_2);
 	pageTable[page_no_1] = (int)physical_page_1_baseaddr | 0xC0E;
 	pageTable[page_no_2] = (int)physical_page_2_baseaddr | 0xC1E;
 
@@ -265,13 +270,17 @@ CUserModeTask::CUserModeTask(const char *exe_path)
 
 CUserModeTask::~CUserModeTask(void) {
 	u32 *pageTable = m_pPageTable->GetPageTable();
-
+	const u32 *m_exe_load_addr = (u32*)0x80000000;
+	const u32 *m_user_stack_init_addr = (u32*)0x9FFFFFF0;
+	int page_no_1 = (int)m_exe_load_addr >> 20; // TODO: figure out what this variable should be.
+	int page_no_2 = (int)m_user_stack_init_addr >> 20; // TODO: figure out what this variable should be.
+	
 	// TODO: Deallocate the physical pages of this task.
 	// Hint: You can do something like:
-	//         void *physical_page_1_baseaddr = ...
-	//         void *physical_page_2_baseaddr = ...
-	//         CMemorySystem::Get()->UserModeTaskPageFree(physical_page_1_baseaddr);
-	//         CMemorySystem::Get()->UserModeTaskPageFree(physical_page_2_baseaddr);
+		void *physical_page_1_baseaddr = (void *)(pageTable[page_no_1] & 0x000);
+		void *physical_page_2_baseaddr = (void *)(pageTable[page_no_2] & 0x000);
+		CMemorySystem::Get()->UserModeTaskPageFree(physical_page_1_baseaddr);
+		CMemorySystem::Get()->UserModeTaskPageFree(physical_page_2_baseaddr);
 }
 
 void CUserModeTask::Run(void) {
