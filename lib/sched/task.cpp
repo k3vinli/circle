@@ -270,15 +270,15 @@ CUserModeTask::CUserModeTask(const char *exe_path)
 
 CUserModeTask::~CUserModeTask(void) {
 	u32 *pageTable = m_pPageTable->GetPageTable();
-	const u32 *m_exe_load_addr = (u32*)0x80000000;
-	const u32 *m_user_stack_init_addr = (u32*)0x9FFFFFF0;
-	int page_no_1 = (int)m_exe_load_addr >> 20; // TODO: figure out what this variable should be.
-	int page_no_2 = (int)m_user_stack_init_addr >> 20; // TODO: figure out what this variable should be.
+	// const u32 *m_exe_load_addr = (u32*)0x80000000;
+	// const u32 *m_user_stack_init_addr = (u32*)0x9FFFFFF0;
+	int page_no_1 = 0x800; // TODO: figure out what this variable should be.
+	int page_no_2 = 0x9FF; // TODO: figure out what this variable should be.
 	
 	// TODO: Deallocate the physical pages of this task.
 	// Hint: You can do something like:
-		void *physical_page_1_baseaddr = (void *)(pageTable[page_no_1] & 0x000);
-		void *physical_page_2_baseaddr = (void *)(pageTable[page_no_2] & 0x000);
+		void *physical_page_1_baseaddr = (void *)(pageTable[page_no_1] & 0xFFF00000);
+		void *physical_page_2_baseaddr = (void *)(pageTable[page_no_2] & 0xFFF00000);
 		CMemorySystem::Get()->UserModeTaskPageFree(physical_page_1_baseaddr);
 		CMemorySystem::Get()->UserModeTaskPageFree(physical_page_2_baseaddr);
 }
